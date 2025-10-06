@@ -39,6 +39,12 @@ io.on("connection", (socket) => {
     socket.emit("roomCreated", roomId);
   });
 
+  socket.on("getPlayers", async (roomId) => {
+    const room = await io.in(roomId).fetchSockets();
+    const players = room.map((s) => s.id);
+    socket.emit("playersList", players);
+  });
+
   socket.on("joinRoom", (roomId) => {
     const roomExists = io.sockets.adapter.rooms.has(roomId);
     if (!roomExists) {
