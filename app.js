@@ -29,9 +29,26 @@ io.on("connection", (socket) => {
   console.log("A user connected: " + socket.id);
 
   socket.on("createRoom", (roomId) => {
+    const roomExists = io.sockets.adapter.rooms.has(roomId);
+    if (roomExists) {
+      socket.emit("error", "Room already exists");
+      return;
+    }
     socket.join(roomId);
     console.log(`User ${socket.id} created and joined room: ${roomId}`);
     socket.emit("roomCreated", roomId);
+  });
+
+  socket.on("joinRoom", (roomId) => {
+    const roomExists = io.sockets.adapter.rooms.has(roomId);
+    if (!roomExists) {
+      socket.emit("error", "Room does not exist");
+      return;
+    }
+
+    socket.join(roomId);
+    console.log(`User ${socket.id} joined room: ${roomId}`);
+    socket.emit("roomJoined", roomId);
   });
 
   socket.on("disconnect", () => {
