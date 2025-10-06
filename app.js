@@ -26,7 +26,13 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("A user connected");
+  console.log("A user connected: " + socket.id);
+
+  socket.on("createRoom", (roomId) => {
+    socket.join(roomId);
+    console.log(`User ${socket.id} created and joined room: ${roomId}`);
+    socket.emit("roomCreated", roomId);
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected");
