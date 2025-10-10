@@ -28,29 +28,36 @@ app.get("/", (req, res) => {
 io.on("connection", (socket) => {
   console.log("A user connected: " + socket.id);
 
-  socket.on("createRoom", (roomId) => {
+  socket.on("createRoom", (roomId, playerName) => {
     const roomExists = io.sockets.adapter.rooms.has(roomId);
     if (roomExists) {
       socket.emit("error", "Room already exists");
       return;
     }
+
+    socket.data.playerName = playerName;
+    socket.data.roomId = roomId;
+
     socket.join(roomId);
-    console.log(`User ${socket.id} created and joined room: ${roomId}`);
+    console.log(`User ${playerName} created and joined room: ${roomId}`);
     socket.emit("roomCreated", roomId);
   });
 
   socket.on("getPlayers", async (roomId) => {
-    const room = await io.in(roomId).fetchSockets();
-    const players = room.map((s) => s.id);
+    const sockets = await io.in(roomId).fetchSockets();
+    const players = sockets.map((s) => s.data.playerName);
     socket.emit("playersList", players);
   });
 
-  socket.on("joinRoom", (roomId) => {
+  socket.on("joinRoom", (roomId, playerName) => {
     const roomExists = io.sockets.adapter.rooms.has(roomId);
     if (!roomExists) {
       socket.emit("error", "Room does not exist");
       return;
     }
+
+    socket.data.playerName = playerName;
+    socket.data.roomId = roomId;
 
     socket.join(roomId);
     console.log(`User ${socket.id} joined room: ${roomId}`);
