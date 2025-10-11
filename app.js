@@ -29,11 +29,11 @@ io.on("connection", (socket) => {
   console.log("A user connected: " + socket.id);
 
   socket.on("createRoom", (roomId, playerName) => {
-    const roomExists = io.sockets.adapter.rooms.has(roomId);
-    if (roomExists) {
-      socket.emit("error", "Room already exists");
-      return;
-    }
+    // const roomExists = io.sockets.adapter.rooms.has(roomId);
+    // if (roomExists) {
+    //   socket.emit("error", "Room already exists");
+    //   return;
+    // }
 
     socket.data.playerName = playerName;
     socket.data.roomId = roomId;
@@ -50,11 +50,11 @@ io.on("connection", (socket) => {
   });
 
   socket.on("joinRoom", (roomId, playerName) => {
-    const roomExists = io.sockets.adapter.rooms.has(roomId);
-    if (!roomExists) {
-      socket.emit("error", "Room does not exist");
-      return;
-    }
+    // const roomExists = io.sockets.adapter.rooms.has(roomId);
+    // if (!roomExists) {
+    //   socket.emit("error", "Room does not exist");
+    //   return;
+    // }
 
     socket.data.playerName = playerName;
     socket.data.roomId = roomId;
