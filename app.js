@@ -1,85 +1,20 @@
 import express from "express";
-import { fileURLToPath } from "url";
-import path from "path";
 import { createServer } from "http";
 import { Server } from "socket.io";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { config } from "./src/config/socket.js";
+import { setupSocketHandlers } from "./src/sockets/socketsManager.js";
+import router from "./src/routes/expressRouter.js";
 
 const app = express();
-const port = 3000;
 const server = createServer(app);
 const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
-  },
+  cors: config.cors,
 });
 
-app.use(express.static(__dirname));
+app.use('/', router)
 
-app.use("/favicon.ico", express.static("public/favicon.svg"));
+setupSocketHandlers(io);
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-io.on("connection", (socket) => {
-  console.log("A user connected: " + socket.id);
-
-  socket.on("createRoom", async (roomId, playerName) => {
-    // const roomExists = io.sockets.adapter.rooms.has(roomId);
-    // if (roomExists) {
-    //   socket.emit("error", "Room already exists");
-    //   return;
-    // }
-
-    socket.data.playerName = playerName;
-    socket.data.roomId = roomId;
-
-    await socket.join(roomId);
-    console.log(`User ${playerName} created and joined room: ${roomId}`);
-    socket.emit("roomCreated", roomId, playerName);
-    
-    const sockets = await io.in(roomId).fetchSockets();
-    const players = sockets.map((s) => s.data.playerName);
-    io.to(roomId).emit("playersList", players);
-  });
-
-  socket.on("getPlayers", async (roomId) => {
-    const sockets = await io.in(roomId).fetchSockets();
-    const players = sockets.map((s) => s.data.playerName);
-    socket.emit("playersList", players);
-    console.log("GETTING PLAYERS", players);
-  });
-
-  socket.on("joinRoom", async (roomId, playerName) => {
-    // const roomExists = io.sockets.adapter.rooms.has(roomId);
-    // if (!roomExists) {
-    //   socket.emit("error", "Room does not exist");
-    //   return;
-    // }
-
-    socket.data.playerName = playerName;
-    socket.data.roomId = roomId;
-
-    await socket.join(roomId);
-    console.log(`User ${socket.id} joined room: ${roomId}`);
-
-    io.to(roomId).emit("roomJoined", roomId, playerName);
-    const sockets = await io.in(roomId).fetchSockets();
-    const players = sockets.map((s) => s.data.playerName);
-    io.to(roomId).emit("playersList", players);
-  });
-
-  socket.on("disconnect", () => {
-    const roomId = socket.data.roomId
-    socket.to(roomId).emit("playerLeft", socket.data.playerName);
-    console.log("A user disconnected");
-  });
-});
-
-server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+server.listen(config.port, () => {
+  console.log(`Server is running on port ${config.port}`);
 });
