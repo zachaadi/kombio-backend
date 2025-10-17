@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon --watch public/ --watch app.js app.js",
+    "dev": "nodemon --watch src --watch app.js --watch public --ext js,html,json app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

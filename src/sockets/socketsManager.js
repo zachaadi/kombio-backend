@@ -1,4 +1,4 @@
-import { createRoomHandler, getPlayersHandler, joinRoomHandler, disconnectHandler } from "./roomSocketHandlers.js";
+import { sendSnackbar, createRoomHandler, getPlayersHandler, joinRoomHandler, disconnectHandler } from "./roomSocketHandlers.js";
 
 export function setupSocketHandlers(io) {
   io.on("connection", (socket) => {
@@ -14,6 +14,10 @@ export function setupSocketHandlers(io) {
 
     socket.on("joinRoom", async (roomId, playerName) => {
       await joinRoomHandler(roomId, playerName, socket, io);
+    });
+
+    socket.on("copyToClipboard", async () => {
+      await sendSnackbar(socket);
     });
 
     socket.on("disconnect", async () => {
