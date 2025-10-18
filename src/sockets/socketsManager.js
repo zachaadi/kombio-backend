@@ -16,8 +16,8 @@ export function setupSocketHandlers(io) {
       await joinRoomHandler(roomId, playerName, socket, io);
     });
 
-    socket.on("copyToClipboard", async () => {
-      await sendSnackbar(socket);
+    socket.on("sendSnackbar", async (severity, message) => {
+      await sendSnackbar(socket, severity, message);
     });
 
     socket.on("disconnect", async () => {

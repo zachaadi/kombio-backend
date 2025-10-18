@@ -44,8 +44,8 @@ export const joinRoomHandler = async (roomId, playerName, socket, io) => {
   console.log("joinRoomHandler");
 };
 
-export const sendSnackbar = async (socket) => {
-  socket.emit("sendSnackbar", "info", "Copied!");
+export const sendSnackbar = async (socket, severity, message) => {
+  socket.emit("sendSnackbar", severity, message);
 };
 
 export const disconnectHandler = (socket) => {
