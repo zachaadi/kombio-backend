@@ -1,9 +1,9 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { config } from "./config/socket";
-import { setupSocketHandlers } from "./sockets/socketsManager";
-import router from "./routes/expressRouter";
+import { config } from "./config/socket.js";
+import { setupSocketHandlers } from "./sockets/socketsManager.js";
+import router from "./routes/expressRouter.js";
 
 const app = express();
 const server = createServer(app);
