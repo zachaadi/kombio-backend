@@ -6,8 +6,10 @@ import {
   joinRoomHandler,
   disconnectHandler,
 } from "./roomSocketHandlers.js";
+import { Server } from "socket.io";
 
-export function setupSocketHandlers(io) {
+
+export function setupSocketHandlers(io: Server) {
   io.on("connection", (socket) => {
     console.log("A user connected: " + socket.id);
 

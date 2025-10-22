@@ -1,9 +1,9 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { config } from "./src/config/socket.js";
-import { setupSocketHandlers } from "./src/sockets/socketsManager.js";
-import router from "./src/routes/expressRouter.js";
+import { config } from "./config/socket";
+import { setupSocketHandlers } from "./sockets/socketsManager";
+import router from "./routes/expressRouter";
 
 const app = express();
 const server = createServer(app);
@@ -11,7 +11,7 @@ const io = new Server(server, {
   cors: config.cors,
 });
 
-app.use('/', router)
+app.use("/", router);
 
 setupSocketHandlers(io);
 
