@@ -48,6 +48,12 @@ export const sendSnackbar = async (socket, severity, message) => {
   socket.emit("sendSnackbar", severity, message);
 };
 
+export const chatMessageHandler = async (socket, message, io) => {
+  const roomId = socket.data.roomId;
+  const playerName = socket.data.playerName;
+  io.to(roomId).emit("chatMessage", playerName, message);
+};
+
 export const disconnectHandler = (socket) => {
   const roomId = socket.data.roomId;
   socket.to(roomId).emit("playerLeft", socket.data.playerName);
