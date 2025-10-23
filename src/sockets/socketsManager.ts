@@ -14,11 +14,11 @@ export function setupSocketHandlers(io: Server) {
   io.on("connection", (socket) => {
 
     socket.on("createRoom", async (roomId, playerName) => {
-      await createRoomHandler(roomId, playerName, socket, io);
+      await createRoomHandler(roomId, playerName, socket);
     });
 
     socket.on("getPlayers", async (roomId) => {
-      await getPlayersHandler(roomId, socket, io);
+      await getPlayersHandler(roomId, socket);
     });
 
     socket.on("joinRoom", async (roomId, playerName) => {

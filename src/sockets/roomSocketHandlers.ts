@@ -3,7 +3,7 @@ import { Room, activeRooms } from "../services/room.js";
 import { Player } from "../services/player.js";
 import { Message } from "../services/message.js";
 
-export const createRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
+export const createRoomHandler = async (roomId: string, playerName: string, socket: Socket) => {
   const roomExists = activeRooms.has(roomId);
   if (roomExists) {
     socket.emit("sendSnackbar", "error", "Room already exists");
@@ -15,23 +15,15 @@ export const createRoomHandler = async (roomId: string, playerName: string, sock
   socket.data.roomId = roomId;
 
   await socket.join(roomId);
-
   const room = await new Room(roomId, "open", [player], [], []);
+
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
   const players = room.players.map((player) => player.name);
 
   socket.emit("playersList", players);
-  console.log("createRoomHandler");
-};
 
-export const getPlayersHandler = async (roomId: string, socket: Socket, io: Server) => {
-  const room = activeRooms.get(roomId);
-  if (room) {
-    const players = room.players.map((player) => player.name);
-    socket.emit("playersList", players);
-  }
-  console.log("getPlayersHandler");
+  console.log("createRoomHandler");
 };
 
 export const joinRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
@@ -41,39 +33,53 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
     return;
   }
 
+  const player = new Player(playerName, false, "regular");
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
 
-  const player = new Player(playerName, false, "regular");
+  await socket.join(roomId);
   const room = activeRooms.get(roomId);
 
-  room?.players.push(player);
+  if (room) {
+    room.players.push(player);
+    socket.emit("roomJoined", roomId);
+    const players = room.players.map((player) => player.name);
+    const messages = room.chat;
 
-  await socket.join(roomId);
-
-  socket.emit("roomJoined", roomId);
-
-  const players = room?.players.map((player) => player.name);
-  const messages = room?.chat;
-
-  io.to(roomId).emit("playersList", players);
-  io.to(roomId).emit("chatMessage", messages);
+    io.to(roomId).emit("playersList", players);
+    socket.emit("chatMessage", messages);
+    console.log(messages);
+  }
 
   console.log("joinRoomHandler");
 };
 
 export const reJoinRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
   const roomExists = activeRooms.has(roomId);
+
   if (!roomExists) {
-    createRoomHandler(roomId, playerName, socket, io);
+    createRoomHandler(roomId, playerName, socket);
   } else {
     joinRoomHandler(roomId, playerName, socket, io);
   }
+
   console.log("reJoinRoomHandler");
+};
+
+export const getPlayersHandler = async (roomId: string, socket: Socket) => {
+  const room = activeRooms.get(roomId);
+
+  if (room) {
+    const players = room.players.map((player) => player.name);
+    socket.emit("playersList", players);
+  }
+
+  console.log("getPlayersHandler");
 };
 
 export const sendSnackbar = async (socket: Socket, severity: string, message: string) => {
   socket.emit("sendSnackbar", severity, message);
+
   console.log("sendSnackbar");
 };
 
@@ -83,11 +89,13 @@ export const chatMessageHandler = async (socket: Socket, message: string, io: Se
 
   const newMessage = new Message(playerName, message);
   const room = activeRooms.get(roomId);
+
   if (room) {
     room.chat.push(newMessage);
   }
 
   io.to(roomId).emit("chatMessage", newMessage);
+
   console.log("chatMessageHandler");
 };
 
@@ -99,10 +107,10 @@ export const disconnectHandler = (socket: Socket) => {
     const playerIndex = room.players.findIndex((player) => player.name === socket.data.playerName);
 
     if (playerIndex != -1) {
-      room?.players.splice(playerIndex, 1);
+      room.players.splice(playerIndex, 1);
     }
 
-    const playersInRoom = room?.players.length;
+    const playersInRoom = room.players.length;
     if (playersInRoom === 0) {
       activeRooms.delete(roomId);
     }

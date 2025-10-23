@@ -24,6 +24,8 @@
     // Stricter Typechecking
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
 
     // ESM Support
     "moduleDetection": "force",
