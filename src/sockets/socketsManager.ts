@@ -5,13 +5,13 @@ import {
   getPlayersHandler,
   joinRoomHandler,
   disconnectHandler,
+  reJoinRoomHandler
 } from "./roomSocketHandlers.js";
 import { Server } from "socket.io";
 
 
 export function setupSocketHandlers(io: Server) {
   io.on("connection", (socket) => {
-    console.log("A user connected: " + socket.id);
 
     socket.on("createRoom", async (roomId, playerName) => {
       await createRoomHandler(roomId, playerName, socket, io);
@@ -24,6 +24,10 @@ export function setupSocketHandlers(io: Server) {
     socket.on("joinRoom", async (roomId, playerName) => {
       await joinRoomHandler(roomId, playerName, socket, io);
     });
+
+    socket.on("reJoinRoom", async (roomId, playerName) => {
+      await reJoinRoomHandler(roomId, playerName, socket, io)
+    })
 
     socket.on("sendSnackbar", async (severity, message) => {
       await sendSnackbar(socket, severity, message);
