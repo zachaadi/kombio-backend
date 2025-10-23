@@ -1,6 +1,7 @@
 import { Socket, Server } from "socket.io";
 import { Room, activeRooms } from "../services/room.js";
 import { Player } from "../services/player.js";
+import { Message } from "../services/message.js";
 
 export const createRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
   const roomExists = activeRooms.has(roomId);
@@ -15,7 +16,7 @@ export const createRoomHandler = async (roomId: string, playerName: string, sock
 
   await socket.join(roomId);
 
-  const room = await new Room(roomId, "open", [player], []);
+  const room = await new Room(roomId, "open", [player], [], []);
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
   const players = room.players.map((player) => player.name);
@@ -53,8 +54,11 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
   socket.emit("roomJoined", roomId);
 
   const players = room?.players.map((player) => player.name);
+  const messages = room?.chat;
 
   io.to(roomId).emit("playersList", players);
+  io.to(roomId).emit("chatMessage", messages);
+
   console.log("joinRoomHandler");
 };
 
@@ -76,7 +80,14 @@ export const sendSnackbar = async (socket: Socket, severity: string, message: st
 export const chatMessageHandler = async (socket: Socket, message: string, io: Server) => {
   const roomId = socket.data.roomId;
   const playerName = socket.data.playerName;
-  io.to(roomId).emit("chatMessage", playerName, message);
+
+  const newMessage = new Message(playerName, message);
+  const room = activeRooms.get(roomId);
+  if (room) {
+    room.chat.push(newMessage);
+  }
+
+  io.to(roomId).emit("chatMessage", newMessage);
   console.log("chatMessageHandler");
 };
 
