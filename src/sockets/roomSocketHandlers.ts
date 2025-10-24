@@ -104,6 +104,8 @@ export const getMessagesHandler = async (roomId: string, io: Server) => {
     const messageList = room.chat;
     io.to(roomId).emit("messageList", messageList);
   }
+
+  console.log("getMessagesHandler");
 };
 
 export const disconnectHandler = (socket: Socket) => {
