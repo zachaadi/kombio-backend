@@ -47,8 +47,7 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
     const messages = room.chat;
 
     io.to(roomId).emit("playersList", players);
-    socket.emit("chatMessage", messages);
-    console.log(messages);
+    socket.emit("messageList", messages);
   }
 
   console.log("joinRoomHandler");
@@ -83,7 +82,7 @@ export const sendSnackbar = async (socket: Socket, severity: string, message: st
   console.log("sendSnackbar");
 };
 
-export const chatMessageHandler = async (socket: Socket, message: string, io: Server) => {
+export const newMessageHandler = async (socket: Socket, message: string, io: Server) => {
   const roomId = socket.data.roomId;
   const playerName = socket.data.playerName;
 
@@ -92,11 +91,19 @@ export const chatMessageHandler = async (socket: Socket, message: string, io: Se
 
   if (room) {
     room.chat.push(newMessage);
+    io.to(roomId).emit("messageList", newMessage);
+    console.log(roomId, newMessage);
   }
 
-  io.to(roomId).emit("chatMessage", newMessage);
-
   console.log("chatMessageHandler");
+};
+
+export const getMessagesHandler = async (roomId: string, io: Server) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    const messageList = room.chat;
+    io.to(roomId).emit("messageList", messageList);
+  }
 };
 
 export const disconnectHandler = (socket: Socket) => {

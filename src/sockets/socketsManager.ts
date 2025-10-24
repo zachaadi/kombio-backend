@@ -1,18 +1,17 @@
 import {
-  chatMessageHandler,
+  newMessageHandler,
   sendSnackbar,
   createRoomHandler,
   getPlayersHandler,
   joinRoomHandler,
   disconnectHandler,
-  reJoinRoomHandler
+  reJoinRoomHandler,
+  getMessagesHandler,
 } from "./roomSocketHandlers.js";
 import { Server } from "socket.io";
 
-
 export function setupSocketHandlers(io: Server) {
   io.on("connection", (socket) => {
-
     socket.on("createRoom", async (roomId, playerName) => {
       await createRoomHandler(roomId, playerName, socket);
     });
@@ -26,15 +25,19 @@ export function setupSocketHandlers(io: Server) {
     });
 
     socket.on("reJoinRoom", async (roomId, playerName) => {
-      await reJoinRoomHandler(roomId, playerName, socket, io)
-    })
+      await reJoinRoomHandler(roomId, playerName, socket, io);
+    });
 
     socket.on("sendSnackbar", async (severity, message) => {
       await sendSnackbar(socket, severity, message);
     });
 
-    socket.on("chatMessage", async (message) => {
-      await chatMessageHandler(socket, message, io);
+    socket.on("newMessage", async (message) => {
+      await newMessageHandler(socket, message, io);
+    });
+
+    socket.on("getMessages", async (roomId) => {
+      await getMessagesHandler(roomId, io);
     });
 
     socket.on("disconnect", async () => {
