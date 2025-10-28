@@ -19,7 +19,7 @@ export const createRoomHandler = async (roomId: string, playerName: string, sock
 
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
-  const players = room.players.map((player) => player.name);
+  const players = room.players.map((player) => ({ name: player.name, isReady: player.isReady, role: player.role }));
 
   socket.emit("playersList", players);
 
@@ -43,7 +43,7 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
   if (room) {
     room.players.push(player);
     socket.emit("roomJoined", roomId);
-    const players = room.players.map((player) => player.name);
+    const players = room.players.map((player) => ({ name: player.name, isReady: player.isReady, role: player.role }));
     const messages = room.chat;
 
     io.to(roomId).emit("playersList", players);
@@ -69,7 +69,7 @@ export const getPlayersHandler = async (roomId: string, socket: Socket) => {
   const room = activeRooms.get(roomId);
 
   if (room) {
-    const players = room.players.map((player) => player.name);
+    const players = room.players.map((player) => ({ name: player.name, isReady: player.isReady, role: player.role }));
     socket.emit("playersList", players);
   }
 
