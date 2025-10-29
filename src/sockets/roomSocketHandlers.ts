@@ -3,6 +3,8 @@ import { Room, activeRooms } from "../services/room.js";
 import { Player } from "../services/player.js";
 import { Message } from "../services/message.js";
 
+const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
+
 export const createRoomHandler = async (roomId: string, playerName: string, socket: Socket) => {
   const roomExists = activeRooms.has(roomId);
   if (roomExists) {
@@ -10,7 +12,7 @@ export const createRoomHandler = async (roomId: string, playerName: string, sock
     return;
   }
 
-  const player = new Player(playerName, false, "admin");
+  const player = new Player(playerName, false, "admin", true);
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
 
@@ -19,7 +21,12 @@ export const createRoomHandler = async (roomId: string, playerName: string, sock
 
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
-  const players = room.players.map((player) => ({ name: player.name, isReady: player.isReady, role: player.role }));
+  const players = room.players.map((player) => ({
+    name: player.name,
+    isReady: player.isReady,
+    role: player.role,
+    isActive: player.isActive,
+  }));
 
   socket.emit("playersList", players);
 
@@ -33,7 +40,7 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
     return;
   }
 
-  const player = new Player(playerName, false, "regular");
+  const player = new Player(playerName, false, "regular", true);
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
 
@@ -43,23 +50,48 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
   if (room) {
     room.players.push(player);
     socket.emit("roomJoined", roomId);
-    const players = room.players.map((player) => ({ name: player.name, isReady: player.isReady, role: player.role }));
+    const players = room.players.map((player) => ({
+      name: player.name,
+      isReady: player.isReady,
+      role: player.role,
+      isActive: player.isActive,
+    }));
     const messages = room.chat;
 
     io.to(roomId).emit("playersList", players);
     socket.emit("messageList", messages);
+    const timer = roomDeletionTimers.get(roomId);
+    if (timer) {
+      clearTimeout(timer);
+      roomDeletionTimers.delete(roomId);
+    }
   }
 
   console.log("joinRoomHandler");
 };
 
 export const reJoinRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
-  const roomExists = activeRooms.has(roomId);
+  const room = activeRooms.get(roomId);
 
-  if (!roomExists) {
-    createRoomHandler(roomId, playerName, socket);
-  } else {
-    joinRoomHandler(roomId, playerName, socket, io);
+  if (room) {
+    const player = room.players.find((player) => player.name === playerName);
+    if (player) {
+      player.isActive = true;
+      const timer = roomDeletionTimers.get(roomId);
+      if (timer) {
+        clearTimeout(timer);
+        roomDeletionTimers.delete(roomId);
+      }
+    }
+    const players = room.players.map((player) => ({
+      name: player.name,
+      isReady: player.isReady,
+      role: player.role,
+      isActive: player.isActive,
+    }));
+    const messages = room.chat;
+    io.to(roomId).emit("playersList", players);
+    io.to(roomId).emit("messageList", messages);
   }
 
   console.log("reJoinRoomHandler");
@@ -69,7 +101,12 @@ export const getPlayersHandler = async (roomId: string, socket: Socket) => {
   const room = activeRooms.get(roomId);
 
   if (room) {
-    const players = room.players.map((player) => ({ name: player.name, isReady: player.isReady, role: player.role }));
+    const players = room.players.map((player) => ({
+      name: player.name,
+      isReady: player.isReady,
+      role: player.role,
+      isActive: player.isActive,
+    }));
     socket.emit("playersList", players);
   }
 
@@ -95,7 +132,7 @@ export const newMessageHandler = async (socket: Socket, message: string, io: Ser
     console.log(roomId, newMessage);
   }
 
-  console.log("chatMessageHandler");
+  console.log("newMessageHandler");
 };
 
 export const getMessagesHandler = async (roomId: string, io: Server) => {
@@ -113,15 +150,19 @@ export const disconnectHandler = (socket: Socket) => {
 
   const room = activeRooms.get(roomId);
   if (room) {
-    const playerIndex = room.players.findIndex((player) => player.name === socket.data.playerName);
-
-    if (playerIndex != -1) {
-      room.players.splice(playerIndex, 1);
+    const player = room.players.find((player) => player.name === socket.data.playerName);
+    if (player) {
+      player.isActive = false;
     }
 
-    const playersInRoom = room.players.length;
-    if (playersInRoom === 0) {
-      activeRooms.delete(roomId);
+    const activePlayersCount = room.players.filter((player) => player.isActive).length;
+
+    if (activePlayersCount === 0) {
+
+      const timer = setTimeout(() => {
+        activeRooms.delete(roomId);
+      }, 3000);
+      roomDeletionTimers.set(roomId, timer);
     }
 
     socket.to(roomId).emit("playerLeft", socket.data.playerName);
