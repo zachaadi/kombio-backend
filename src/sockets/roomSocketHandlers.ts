@@ -1,7 +1,7 @@
 import { Socket, Server } from "socket.io";
-import { Room, activeRooms } from "../services/room.js";
-import { Player } from "../services/player.js";
-import { Message } from "../services/message.js";
+import { Room, activeRooms } from "../models/room.js";
+import { Player } from "../models/player.js";
+import { Message } from "../models/message.js";
 
 const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
 
