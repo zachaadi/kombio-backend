@@ -143,6 +143,13 @@ export const disconnectHandler = (socket: Socket) => {
       roomDeletionTimers.set(roomId, timer);
     }
 
+    if (activePlayersCount === 1) {
+      const activePlayer = room.players.find((player) => player.isActive === true);
+      if (activePlayer) {
+        activePlayer.role = "admin";
+      }
+    }
+
     socket.to(roomId).emit("playerLeft", socket.data.playerName);
   }
 
