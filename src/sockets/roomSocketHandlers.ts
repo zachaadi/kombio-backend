@@ -5,7 +5,7 @@ import { Message } from "../models/message.js";
 
 const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
 
-export const createRoomHandler = async (roomId: string, playerName: string, socket: Socket) => {
+export const createRoomHandler = async (socket: Socket, roomId: string, playerName: string) => {
   const roomExists = activeRooms.has(roomId);
   if (roomExists) {
     socket.emit("sendSnackbar", "error", "Room already exists");
@@ -28,7 +28,7 @@ export const createRoomHandler = async (roomId: string, playerName: string, sock
   console.log("createRoomHandler");
 };
 
-export const joinRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
+export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string, playerName: string) => {
   const roomExists = activeRooms.has(roomId);
   if (!roomExists) {
     socket.emit("sendSnackbar", "error", "Room does not exist");
@@ -60,7 +60,7 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
   console.log("joinRoomHandler");
 };
 
-export const reJoinRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
+export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: string, playerName: string) => {
   const room = activeRooms.get(roomId);
   await socket.join(roomId);
 
@@ -83,7 +83,7 @@ export const reJoinRoomHandler = async (roomId: string, playerName: string, sock
   console.log("reJoinRoomHandler");
 };
 
-export const getPlayersHandler = async (roomId: string, socket: Socket) => {
+export const getPlayersHandler = async (socket: Socket, roomId: string) => {
   const room = activeRooms.get(roomId);
 
   if (room) {
@@ -94,22 +94,13 @@ export const getPlayersHandler = async (roomId: string, socket: Socket) => {
   console.log("getPlayersHandler");
 };
 
-export const sendSnackbar = async (socket: Socket, severity: string, message: string) => {
+export const sendSnackbarHandler = async (socket: Socket, severity: string, message: string) => {
   socket.emit("sendSnackbar", severity, message);
 
-  console.log("sendSnackbar");
+  console.log("sendSnackbarHandler");
 };
 
-export const newMessageHandler = async (
-  socket: Socket,
-  message: string,
-  io: Server,
-  roomId: string,
-  playerName: string
-) => {
-  // const roomId = socket.data.roomId;
-  // const playerName = socket.data.playerName;
-
+export const newMessageHandler = async (io: Server, roomId: string, playerName: string, message: string) => {
   const newMessage = new Message(playerName, message);
   const room = activeRooms.get(roomId);
 
@@ -121,7 +112,7 @@ export const newMessageHandler = async (
   console.log("newMessageHandler");
 };
 
-export const getMessagesHandler = async (roomId: string, io: Server) => {
+export const getMessagesHandler = async (io: Server, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
     const messageList = room.chat;

@@ -1,43 +1,43 @@
 import {
-  newMessageHandler,
-  sendSnackbar,
   createRoomHandler,
-  getPlayersHandler,
   joinRoomHandler,
-  disconnectHandler,
   reJoinRoomHandler,
+  getPlayersHandler,
+  sendSnackbarHandler,
+  newMessageHandler,
   getMessagesHandler,
+  disconnectHandler,
 } from "./roomSocketHandlers.js";
 import { Server } from "socket.io";
 
 export function setupSocketHandlers(io: Server) {
   io.on("connection", (socket) => {
     socket.on("createRoom", async (roomId, playerName) => {
-      await createRoomHandler(roomId, playerName, socket);
-    });
-
-    socket.on("getPlayers", async (roomId) => {
-      await getPlayersHandler(roomId, socket);
+      await createRoomHandler(socket, roomId, playerName);
     });
 
     socket.on("joinRoom", async (roomId, playerName) => {
-      await joinRoomHandler(roomId, playerName, socket, io);
+      await joinRoomHandler(io, socket, roomId, playerName);
     });
 
     socket.on("reJoinRoom", async (roomId, playerName) => {
-      await reJoinRoomHandler(roomId, playerName, socket, io);
+      await reJoinRoomHandler(io, socket, roomId, playerName);
+    });
+
+    socket.on("getPlayers", async (roomId) => {
+      await getPlayersHandler(socket, roomId);
     });
 
     socket.on("sendSnackbar", async (severity, message) => {
-      await sendSnackbar(socket, severity, message);
+      await sendSnackbarHandler(socket, severity, message);
     });
 
-    socket.on("newMessage", async (message, roomId, playerName) => {
-      await newMessageHandler(socket, message, io, roomId, playerName);
+    socket.on("newMessage", async (roomId, playerName, message) => {
+      await newMessageHandler(io, roomId, playerName, message);
     });
 
     socket.on("getMessages", async (roomId) => {
-      await getMessagesHandler(roomId, io);
+      await getMessagesHandler(io, roomId);
     });
 
     socket.on("disconnect", async () => {
