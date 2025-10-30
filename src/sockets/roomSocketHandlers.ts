@@ -46,7 +46,7 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
     room.players.push(player);
     socket.emit("roomJoined", roomId);
     const players = room.players;
-    const messages = room.chat;
+    const messages = room.messages;
 
     io.to(roomId).emit("playersList", players);
     socket.emit("messageList", messages);
@@ -78,7 +78,7 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
       }
     }
     const players = room.players;
-    const messages = room.chat;
+    const messages = room.messages;
     io.to(roomId).emit("playersList", players);
     io.to(roomId).emit("messageList", messages);
   }
@@ -108,8 +108,8 @@ export const newMessageHandler = async (io: Server, roomId: string, playerName: 
   const room = activeRooms.get(roomId);
 
   if (room) {
-    room.chat.push(newMessage);
-    io.to(roomId).emit("messageList", room.chat);
+    room.messages.push(newMessage);
+    io.to(roomId).emit("messageList", room.messages);
   }
 
   console.log("newMessageHandler");
@@ -118,7 +118,7 @@ export const newMessageHandler = async (io: Server, roomId: string, playerName: 
 export const getMessagesHandler = async (io: Server, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
-    io.to(roomId).emit("messageList", room.chat);
+    io.to(roomId).emit("messageList", room.messages);
   }
 
   console.log("getMessagesHandler");
