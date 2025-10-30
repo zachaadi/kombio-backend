@@ -61,10 +61,11 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
 };
 
 export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: string, playerName: string) => {
-  const room = activeRooms.get(roomId);
-  await socket.join(roomId);
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
+
+  await socket.join(roomId);
+  const room = activeRooms.get(roomId);
 
   if (room) {
     const player = room.players.find((player) => player.name === playerName);
@@ -108,7 +109,7 @@ export const newMessageHandler = async (io: Server, roomId: string, playerName: 
 
   if (room) {
     room.chat.push(newMessage);
-    io.to(roomId).emit("messageList", newMessage);
+    io.to(roomId).emit("messageList", room.chat);
   }
 
   console.log("newMessageHandler");
@@ -117,8 +118,7 @@ export const newMessageHandler = async (io: Server, roomId: string, playerName: 
 export const getMessagesHandler = async (io: Server, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
-    const messageList = room.chat;
-    io.to(roomId).emit("messageList", messageList);
+    io.to(roomId).emit("messageList", room.chat);
   }
 
   console.log("getMessagesHandler");
@@ -145,6 +145,6 @@ export const disconnectHandler = (socket: Socket) => {
 
     socket.to(roomId).emit("playerLeft", socket.data.playerName);
   }
-  
+
   console.log("disconnectHandler");
 };
