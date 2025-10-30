@@ -21,12 +21,7 @@ export const createRoomHandler = async (roomId: string, playerName: string, sock
 
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
-  const players = room.players.map((player) => ({
-    name: player.name,
-    isReady: player.isReady,
-    role: player.role,
-    isActive: player.isActive,
-  }));
+  const players = room.players;
 
   socket.emit("playersList", players);
 
@@ -50,12 +45,7 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
   if (room) {
     room.players.push(player);
     socket.emit("roomJoined", roomId);
-    const players = room.players.map((player) => ({
-      name: player.name,
-      isReady: player.isReady,
-      role: player.role,
-      isActive: player.isActive,
-    }));
+    const players = room.players;
     const messages = room.chat;
 
     io.to(roomId).emit("playersList", players);
@@ -72,6 +62,7 @@ export const joinRoomHandler = async (roomId: string, playerName: string, socket
 
 export const reJoinRoomHandler = async (roomId: string, playerName: string, socket: Socket, io: Server) => {
   const room = activeRooms.get(roomId);
+  await socket.join(roomId);
 
   if (room) {
     const player = room.players.find((player) => player.name === playerName);
@@ -83,12 +74,7 @@ export const reJoinRoomHandler = async (roomId: string, playerName: string, sock
         roomDeletionTimers.delete(roomId);
       }
     }
-    const players = room.players.map((player) => ({
-      name: player.name,
-      isReady: player.isReady,
-      role: player.role,
-      isActive: player.isActive,
-    }));
+    const players = room.players;
     const messages = room.chat;
     io.to(roomId).emit("playersList", players);
     io.to(roomId).emit("messageList", messages);
@@ -101,12 +87,7 @@ export const getPlayersHandler = async (roomId: string, socket: Socket) => {
   const room = activeRooms.get(roomId);
 
   if (room) {
-    const players = room.players.map((player) => ({
-      name: player.name,
-      isReady: player.isReady,
-      role: player.role,
-      isActive: player.isActive,
-    }));
+    const players = room.players;
     socket.emit("playersList", players);
   }
 
@@ -119,9 +100,15 @@ export const sendSnackbar = async (socket: Socket, severity: string, message: st
   console.log("sendSnackbar");
 };
 
-export const newMessageHandler = async (socket: Socket, message: string, io: Server) => {
-  const roomId = socket.data.roomId;
-  const playerName = socket.data.playerName;
+export const newMessageHandler = async (
+  socket: Socket,
+  message: string,
+  io: Server,
+  roomId: string,
+  playerName: string
+) => {
+  // const roomId = socket.data.roomId;
+  // const playerName = socket.data.playerName;
 
   const newMessage = new Message(playerName, message);
   const room = activeRooms.get(roomId);
@@ -129,7 +116,6 @@ export const newMessageHandler = async (socket: Socket, message: string, io: Ser
   if (room) {
     room.chat.push(newMessage);
     io.to(roomId).emit("messageList", newMessage);
-    console.log(roomId, newMessage);
   }
 
   console.log("newMessageHandler");
@@ -158,7 +144,6 @@ export const disconnectHandler = (socket: Socket) => {
     const activePlayersCount = room.players.filter((player) => player.isActive).length;
 
     if (activePlayersCount === 0) {
-
       const timer = setTimeout(() => {
         activeRooms.delete(roomId);
       }, 3000);

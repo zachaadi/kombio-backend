@@ -32,8 +32,8 @@ export function setupSocketHandlers(io: Server) {
       await sendSnackbar(socket, severity, message);
     });
 
-    socket.on("newMessage", async (message) => {
-      await newMessageHandler(socket, message, io);
+    socket.on("newMessage", async (message, roomId, playerName) => {
+      await newMessageHandler(socket, message, io, roomId, playerName);
     });
 
     socket.on("getMessages", async (roomId) => {
