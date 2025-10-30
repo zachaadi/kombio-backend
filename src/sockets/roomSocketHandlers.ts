@@ -63,10 +63,13 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
 export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: string, playerName: string) => {
   const room = activeRooms.get(roomId);
   await socket.join(roomId);
+  socket.data.playerName = playerName;
+  socket.data.roomId = roomId;
 
   if (room) {
     const player = room.players.find((player) => player.name === playerName);
     if (player) {
+      console.log("player is", player.name);
       player.isActive = true;
       const timer = roomDeletionTimers.get(roomId);
       if (timer) {
@@ -130,18 +133,23 @@ export const disconnectHandler = (socket: Socket) => {
     const player = room.players.find((player) => player.name === socket.data.playerName);
     if (player) {
       player.isActive = false;
+      console.log("inactivating player");
     }
 
     const activePlayersCount = room.players.filter((player) => player.isActive).length;
 
     if (activePlayersCount === 0) {
+      console.log("playercount === 0");
       const timer = setTimeout(() => {
+        console.log("deleting room");
         activeRooms.delete(roomId);
       }, 3000);
       roomDeletionTimers.set(roomId, timer);
     }
 
     socket.to(roomId).emit("playerLeft", socket.data.playerName);
+  } else {
+    console.log("room does NOT exist");
   }
   console.log("disconnectHandler");
 };
