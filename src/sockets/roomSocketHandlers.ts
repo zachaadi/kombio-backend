@@ -124,6 +124,30 @@ export const getMessagesHandler = async (io: Server, roomId: string) => {
   console.log("getMessagesHandler");
 };
 
+export const editNameHandler = async (
+  io: Server,
+  socket: Socket,
+  roomId: string,
+  playerName: string,
+  newName: string
+) => {
+  socket.data.playerName = newName;
+  socket.data.roomId = roomId;
+
+  const room = activeRooms.get(roomId);
+
+  if (room) {
+    const player = room.players.find((player) => player.name === playerName);
+    if (player) {
+      player.name = newName;
+    }
+    const players = room.players;
+    io.to(roomId).emit("playersList", players);
+  }
+
+  console.log("editNameHandler");
+};
+
 export const disconnectHandler = (socket: Socket) => {
   const roomId = socket.data.roomId;
 
@@ -139,6 +163,7 @@ export const disconnectHandler = (socket: Socket) => {
     if (activePlayersCount === 0) {
       const timer = setTimeout(() => {
         activeRooms.delete(roomId);
+        console.log("DELETING ROOM");
       }, 3000);
       roomDeletionTimers.set(roomId, timer);
     }
