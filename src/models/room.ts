@@ -4,10 +4,10 @@ import { Message } from "../models/message.js";
 export const activeRooms = new Map<string, Room>();
 
 export enum RoomStatus {
-  NOTREADY,
-  READY,
-  IN_PROGRESS,
-  COMPLETE,
+  NOTREADY = "notready",
+  READY = "ready",
+  IN_PROGRESS = "inprogress",
+  COMPLETE = "complete",
 }
 
 export class Room {
