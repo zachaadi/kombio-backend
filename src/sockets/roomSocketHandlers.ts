@@ -168,9 +168,12 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
       io.to(roomId).emit("playersList", players);
     }
 
-    // const allReady = room.players.forEach((player) => {
-    //   if(player.isReady)
-    // })
+    const allReady = room.players.every((player) => player.isReady);
+
+    if (allReady) {
+      room.status = RoomStatus.READY;
+      io.to(roomId).emit("allReady", room);
+    }
   }
   console.log("readyUpHandler");
 };
