@@ -1,5 +1,5 @@
 import { Socket, Server } from "socket.io";
-import { Room, activeRooms } from "../models/room.js";
+import { Room, activeRooms, RoomStatus } from "../models/room.js";
 import { Player } from "../models/player.js";
 import { Message } from "../models/message.js";
 
@@ -17,7 +17,7 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
   socket.data.roomId = roomId;
 
   await socket.join(roomId);
-  const room = await new Room(roomId, "open", [player], [], []);
+  const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], []);
 
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
@@ -167,6 +167,10 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
       const players = room.players;
       io.to(roomId).emit("playersList", players);
     }
+
+    // const allReady = room.players.forEach((player) => {
+    //   if(player.isReady)
+    // })
   }
   console.log("readyUpHandler");
 };
