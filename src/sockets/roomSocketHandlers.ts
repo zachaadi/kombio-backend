@@ -139,9 +139,19 @@ export const editNameHandler = async (
   if (room) {
     const player = room.players.find((player) => player.name === playerName);
     if (player) {
+      room.messages.forEach((message) => {
+        if (message.name == playerName) {
+          message.name = newName;
+        }
+      });
+
       player.name = newName;
     }
+
     const players = room.players;
+    const messageList = room.messages;
+    io.to(roomId).emit("messageList", messageList);
+    console.log(messageList);
     io.to(roomId).emit("playersList", players);
   }
 
