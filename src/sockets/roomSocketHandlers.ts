@@ -178,6 +178,20 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
   console.log("readyUpHandler");
 };
 
+export const removePlayerHandler = async (io: Server, roomId: string, playerName: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    const playerIndex = room.players.findIndex((player) => player.name == playerName);
+    if (playerIndex) {
+      room.players.splice(playerIndex);
+    }
+    const players = room.players;
+    io.to(roomId).emit("playersList", players);
+  }
+
+  console.log("removePlayerHandler");
+};
+
 export const disconnectHandler = (socket: Socket) => {
   const roomId = socket.data.roomId;
 
