@@ -151,11 +151,24 @@ export const editNameHandler = async (
     const players = room.players;
     const messageList = room.messages;
     io.to(roomId).emit("messageList", messageList);
-    console.log(messageList);
     io.to(roomId).emit("playersList", players);
   }
 
   console.log("editNameHandler");
+};
+
+export const readyUpHandler = async (io: Server, roomId: string, playerName: string) => {
+  const room = activeRooms.get(roomId);
+
+  if (room) {
+    const player = room.players.find((player) => player.name == playerName);
+    if (player) {
+      player.isReady = !player.isReady;
+      const players = room.players;
+      io.to(roomId).emit("playersList", players);
+    }
+  }
+  console.log("readyUpHandler");
 };
 
 export const disconnectHandler = (socket: Socket) => {

@@ -7,6 +7,7 @@ import {
   newMessageHandler,
   getMessagesHandler,
   editNameHandler,
+  readyUpHandler,
   disconnectHandler,
 } from "./roomSocketHandlers.js";
 import { Server } from "socket.io";
@@ -44,6 +45,10 @@ export function setupSocketHandlers(io: Server) {
     socket.on("editName", async (roomId, playerName, newName) => {
       await editNameHandler(io, socket, roomId, playerName, newName);
     });
+
+    socket.on("readyUp", async (roomId, playerName) => {
+      await readyUpHandler(io, roomId, playerName)
+    })
 
     socket.on("disconnect", async () => {
       await disconnectHandler(socket);
