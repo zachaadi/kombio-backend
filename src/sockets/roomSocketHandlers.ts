@@ -186,17 +186,17 @@ export const removePlayerHandler = async (io: Server, roomId: string, playerName
   const room = activeRooms.get(roomId);
   if (room) {
     const playerIndex = room.players.findIndex((player) => player.name == playerName);
-    if (playerIndex) {
+    if (playerIndex != -1) {
       const removedSocket = (await io.in(roomId).fetchSockets()).find((socket) => socket.data.playerName == playerName);
       if (removedSocket) {
         removedSocket.emit("sendSnackbar", "error", "you have been removed from room");
         removedSocket.emit("kickPlayer");
         removedSocket.leave(roomId);
       }
-      room.players.splice(playerIndex);
+      room.players.splice(playerIndex, 1);
+      io.to(roomId).emit("sendSnackbar", "info", `${playerName} removed from lobby`);
     }
-    const players = room.players;
-    io.to(roomId).emit("playersList", players);
+    io.to(roomId).emit("playersList", room.players);
   }
 
   console.log("removePlayerHandler");
