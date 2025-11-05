@@ -49,6 +49,7 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
     const messages = room.messages;
 
     io.to(roomId).emit("playersList", players);
+    io.to(roomId).emit("notReady", room);
     socket.emit("messageList", messages);
     const timer = roomDeletionTimers.get(roomId);
     if (timer) {
@@ -173,6 +174,9 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
     if (allReady) {
       room.status = RoomStatus.READY;
       io.to(roomId).emit("allReady", room);
+    } else {
+      room.status = RoomStatus.NOTREADY;
+      io.to(roomId).emit("notReady", room);
     }
   }
   console.log("readyUpHandler");
