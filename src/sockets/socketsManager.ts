@@ -56,7 +56,7 @@ export function setupSocketHandlers(io: Server) {
     });
 
     socket.on("disconnect", async () => {
-      await disconnectHandler(socket);
+      await disconnectHandler(io, socket);
     });
   });
 }

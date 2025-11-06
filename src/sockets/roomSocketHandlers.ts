@@ -4,6 +4,7 @@ import { Player } from "../models/player.js";
 import { Message } from "../models/message.js";
 
 const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
+const adminReplacementTimers = new Map<string, NodeJS.Timeout>();
 
 export const createRoomHandler = async (socket: Socket, roomId: string, playerName: string) => {
   const roomExists = activeRooms.has(roomId);
@@ -72,10 +73,17 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
     const player = room.players.find((player) => player.name === playerName);
     if (player) {
       player.isActive = true;
-      const timer = roomDeletionTimers.get(roomId);
-      if (timer) {
-        clearTimeout(timer);
+
+      const deleteTimer = roomDeletionTimers.get(roomId);
+      if (deleteTimer) {
+        clearTimeout(deleteTimer);
         roomDeletionTimers.delete(roomId);
+      }
+
+      const adminTimer = adminReplacementTimers.get(roomId);
+      if (adminTimer) {
+        clearTimeout(adminTimer);
+        adminReplacementTimers.delete(roomId);
       }
     }
     const players = room.players;
@@ -202,31 +210,42 @@ export const removePlayerHandler = async (io: Server, roomId: string, playerName
   console.log("removePlayerHandler");
 };
 
-export const disconnectHandler = (socket: Socket) => {
+export const disconnectHandler = async (io: Server, socket: Socket) => {
   const roomId = socket.data.roomId;
 
   const room = activeRooms.get(roomId);
   if (room) {
     const player = room.players.find((player) => player.name === socket.data.playerName);
+
     if (player) {
       player.isActive = false;
+
+      if (player.role == "admin") {
+        const timer = setTimeout(async () => {
+          const newAdmin = room.players.find((player) => player.name != socket.data.playerName && player.isActive);
+          if (newAdmin) {
+            newAdmin.role = "admin";
+            const newAdminSocket = (await io.in(roomId).fetchSockets()).find(
+              (socket) => socket.data.playerName == newAdmin.name
+            );
+            if (newAdminSocket) {
+              newAdminSocket.emit("sendSnackbar", "info", "You have been made Admin");
+            }
+          }
+
+          io.to(roomId).emit("playersList", room.players);
+        }, 3000);
+        adminReplacementTimers.set(roomId, timer);
+      }
     }
 
     const activePlayersCount = room.players.filter((player) => player.isActive).length;
 
     if (activePlayersCount === 0) {
-      const timer = setTimeout(() => {
+      const deleteTimer = setTimeout(() => {
         activeRooms.delete(roomId);
-        console.log("DELETING ROOM");
       }, 3000);
-      roomDeletionTimers.set(roomId, timer);
-    }
-
-    if (activePlayersCount === 1) {
-      const activePlayer = room.players.find((player) => player.isActive === true);
-      if (activePlayer) {
-        activePlayer.role = "admin";
-      }
+      roomDeletionTimers.set(roomId, deleteTimer);
     }
 
     socket.to(roomId).emit("playerLeft", socket.data.playerName);
