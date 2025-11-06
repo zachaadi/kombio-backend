@@ -177,7 +177,7 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
       io.to(roomId).emit("playersList", players);
     }
 
-    const allReady = room.players.every((player) => player.isReady);
+    const allReady = room.players.filter((player) => player.isActive).every((player) => player.isReady);
 
     if (allReady) {
       room.status = RoomStatus.READY;
