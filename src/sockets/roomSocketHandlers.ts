@@ -22,9 +22,8 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
 
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
-  const players = room.players;
 
-  socket.emit("playersList", players);
+  socket.emit("playersList", room.players);
 
   console.log("createRoomHandler");
 };
@@ -46,12 +45,10 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
   if (room) {
     room.players.push(player);
     socket.emit("roomJoined", roomId);
-    const players = room.players;
-    const messages = room.messages;
 
-    io.to(roomId).emit("playersList", players);
+    io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
-    socket.emit("messageList", messages);
+    socket.emit("messageList", room.messages);
     const timer = roomDeletionTimers.get(roomId);
     if (timer) {
       clearTimeout(timer);
@@ -86,10 +83,9 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
         adminReplacementTimers.delete(roomId);
       }
     }
-    const players = room.players;
-    const messages = room.messages;
-    io.to(roomId).emit("playersList", players);
-    io.to(roomId).emit("messageList", messages);
+
+    io.to(roomId).emit("playersList", room.players);
+    io.to(roomId).emit("messageList", room.messages);
   }
 
   console.log("reJoinRoomHandler");
@@ -99,8 +95,7 @@ export const getPlayersHandler = async (socket: Socket, roomId: string) => {
   const room = activeRooms.get(roomId);
 
   if (room) {
-    const players = room.players;
-    socket.emit("playersList", players);
+    socket.emit("playersList", room.players);
   }
 
   console.log("getPlayersHandler");
@@ -157,10 +152,8 @@ export const editNameHandler = async (
       player.name = newName;
     }
 
-    const players = room.players;
-    const messageList = room.messages;
-    io.to(roomId).emit("messageList", messageList);
-    io.to(roomId).emit("playersList", players);
+    io.to(roomId).emit("messageList", room.messages);
+    io.to(roomId).emit("playersList", room.players);
   }
 
   console.log("editNameHandler");
@@ -197,7 +190,7 @@ export const removePlayerHandler = async (io: Server, roomId: string, playerName
     if (playerIndex != -1) {
       const removedSocket = (await io.in(roomId).fetchSockets()).find((socket) => socket.data.playerName == playerName);
       if (removedSocket) {
-        removedSocket.emit("sendSnackbar", "error", "you have been removed from room");
+        removedSocket.emit("sendSnackbar", "error", "You have been removed from room");
         removedSocket.emit("kickPlayer");
         removedSocket.leave(roomId);
       }
