@@ -14,10 +14,11 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
   }
 
   const player = new Player(playerName, false, "admin", true);
+
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
-
   await socket.join(roomId);
+
   const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], []);
 
   activeRooms.set(roomId, room);
@@ -49,11 +50,13 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
     socket.emit("messageList", room.messages);
-    const timer = roomDeletionTimers.get(roomId);
-    if (timer) {
-      clearTimeout(timer);
-      roomDeletionTimers.delete(roomId);
-    }
+
+    // why did i have this code?
+    // const timer = roomDeletionTimers.get(roomId);
+    // if (timer) {
+    //   clearTimeout(timer);
+    //   roomDeletionTimers.delete(roomId);
+    // }
   }
 
   console.log("joinRoomHandler");
@@ -89,6 +92,28 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
   }
 
   console.log("reJoinRoomHandler");
+};
+
+export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    const playerCount = room.players.length;
+    const assignedName = `guest${playerCount}`;
+    const player = new Player(assignedName, false, "regular", true);
+    socket.data.playerName = assignedName;
+    socket.data.roomId = roomId;
+
+    await socket.join(roomId);
+    room.players.push(player);
+    console.log(player);
+
+    socket.emit("playerFromUrl", roomId, assignedName);
+    io.to(roomId).emit("playersList", room.players);
+    io.to(roomId).emit("notReady", room);
+    socket.emit("messageList", room.messages);
+  }
+
+  console.log("joinFromUrlHandler");
 };
 
 export const getPlayersHandler = async (socket: Socket, roomId: string) => {

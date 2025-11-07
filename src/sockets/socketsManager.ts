@@ -2,6 +2,7 @@ import {
   createRoomHandler,
   joinRoomHandler,
   reJoinRoomHandler,
+  joinFromUrlHandler,
   getPlayersHandler,
   sendSnackbarHandler,
   newMessageHandler,
@@ -25,6 +26,10 @@ export function setupSocketHandlers(io: Server) {
 
     socket.on("reJoinRoom", async (roomId, playerName) => {
       await reJoinRoomHandler(io, socket, roomId, playerName);
+    });
+
+    socket.on("joinFromUrl", async (roomId) => {
+      await joinFromUrlHandler(io, socket, roomId);
     });
 
     socket.on("getPlayers", async (roomId) => {
