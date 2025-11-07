@@ -105,7 +105,6 @@ export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: str
 
     await socket.join(roomId);
     room.players.push(player);
-    console.log(player);
 
     socket.emit("playerFromUrl", roomId, assignedName);
     io.to(roomId).emit("playersList", room.players);
