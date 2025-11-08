@@ -198,8 +198,9 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
     }
 
     const allReady = room.players.filter((player) => player.isActive).every((player) => player.isReady);
+    const minActivePlayers = room.players.filter((player) => player.isActive && player.isReady).length > 1;
 
-    if (allReady) {
+    if (allReady && minActivePlayers) {
       room.status = RoomStatus.READY;
       io.to(roomId).emit("allReady", room);
     } else {
@@ -225,6 +226,11 @@ export const removePlayerHandler = async (io: Server, roomId: string, playerName
       io.to(roomId).emit("sendSnackbar", "info", `${playerName} removed from lobby`);
     }
     io.to(roomId).emit("playersList", room.players);
+    const minActivePlayers = room.players.filter((player) => player.isActive && player.isReady).length > 1;
+
+    if (!minActivePlayers) {
+      io.to(roomId).emit("notReady", room);
+    }
   }
 
   console.log("removePlayerHandler");
