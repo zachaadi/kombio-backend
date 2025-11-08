@@ -2,7 +2,8 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { config } from "./config/socket.js";
-import { setupSocketHandlers } from "./sockets/socketsManager.js";
+import { setupRoomSocketHandlers } from "./sockets/roomSocketsManager.js";
+import { setupGameSocketHandlers } from "./sockets/gameSocketManager.js";
 import router from "./routes/expressRouter.js";
 
 const app = express();
@@ -13,7 +14,8 @@ const io = new Server(server, {
 
 app.use("/", router);
 
-setupSocketHandlers(io);
+setupRoomSocketHandlers(io);
+setupGameSocketHandlers(io);
 
 server.listen(config.port, () => {
   console.log(`Server is running on port ${config.port}`);

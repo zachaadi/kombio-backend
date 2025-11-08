@@ -12,9 +12,10 @@ import {
   removePlayerHandler,
   disconnectHandler,
 } from "./roomSocketHandlers.js";
+
 import { Server } from "socket.io";
 
-export function setupSocketHandlers(io: Server) {
+export function setupRoomSocketHandlers(io: Server) {
   io.on("connection", (socket) => {
     socket.on("createRoom", async (roomId, playerName) => {
       await createRoomHandler(socket, roomId, playerName);
