@@ -2,6 +2,7 @@ import { Socket, Server } from "socket.io";
 import { Room, activeRooms, RoomStatus } from "../models/room.js";
 import { Player } from "../models/player.js";
 import { Message } from "../models/message.js";
+import { Game } from "../models/game.js";
 
 const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
 const adminReplacementTimers = new Map<string, NodeJS.Timeout>();
@@ -19,7 +20,9 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
   socket.data.roomId = roomId;
   await socket.join(roomId);
 
-  const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], []);
+  const game = new Game(0);
+
+  const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], game);
 
   activeRooms.set(roomId, room);
   socket.emit("roomCreated", roomId);
@@ -50,13 +53,6 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
     socket.emit("messageList", room.messages);
-
-    // why did i have this code?
-    // const timer = roomDeletionTimers.get(roomId);
-    // if (timer) {
-    //   clearTimeout(timer);
-    //   roomDeletionTimers.delete(roomId);
-    // }
   }
 
   console.log("joinRoomHandler");
