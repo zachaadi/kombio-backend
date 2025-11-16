@@ -13,7 +13,7 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
     return;
   }
 
-  const player = new Player(playerName, false, "admin", true);
+  const player = new Player(playerName, false, "admin", true, false);
 
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
@@ -36,7 +36,7 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
     return;
   }
 
-  const player = new Player(playerName, false, "regular", true);
+  const player = new Player(playerName, false, "regular", true, false);
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
 
@@ -99,7 +99,7 @@ export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: str
   if (room) {
     const playerCount = room.players.length;
     const assignedName = `guest${playerCount}`;
-    const player = new Player(assignedName, false, "regular", true);
+    const player = new Player(assignedName, false, "regular", true, false);
     socket.data.playerName = assignedName;
     socket.data.roomId = roomId;
 
@@ -202,10 +202,10 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
 
     if (allReady && minActivePlayers) {
       room.status = RoomStatus.READY;
-      io.to(roomId).emit("allReady", room);
+      io.to(roomId).emit("allReady");
     } else {
       room.status = RoomStatus.NOTREADY;
-      io.to(roomId).emit("notReady", room);
+      io.to(roomId).emit("notReady");
     }
   }
   console.log("readyUpHandler");
