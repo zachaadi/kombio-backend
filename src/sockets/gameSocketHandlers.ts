@@ -1,9 +1,10 @@
 import { Server } from "socket.io";
-import { activeRooms } from "../models/room.js";
+import { activeRooms, RoomStatus } from "../models/room.js";
 
 export const beginGameHandler = async (io: Server, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
+    room.status = RoomStatus.IN_PROGRESS;
     const turnIndex = room.game.turnIndex;
 
     const firstPlayer = room.players[turnIndex];

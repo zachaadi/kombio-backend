@@ -39,14 +39,18 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
     return;
   }
 
-  const player = new Player(playerName, false, "regular", true, false);
-  socket.data.playerName = playerName;
-  socket.data.roomId = roomId;
-
-  await socket.join(roomId);
   const room = activeRooms.get(roomId);
-
   if (room) {
+    if (room.status == RoomStatus.IN_PROGRESS) {
+      socket.emit("sendSnackbar", "error", "Game is already in progress");
+      return;
+    }
+
+    const player = new Player(playerName, false, "regular", true, false);
+    socket.data.playerName = playerName;
+    socket.data.roomId = roomId;
+
+    await socket.join(roomId);
     room.players.push(player);
     socket.emit("roomJoined", roomId);
 
@@ -85,6 +89,7 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
 
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("messageList", room.messages);
+    //send a snackbar that player rejoined???
   }
 
   console.log("reJoinRoomHandler");
@@ -93,6 +98,12 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
 export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
+    if (room.status == RoomStatus.IN_PROGRESS) {
+      socket.emit("kickPlayer");
+      socket.emit("sendSnackbar", "error", "Game is already in progress");
+      return;
+    }
+
     const playerCount = room.players.length;
     const assignedName = `guest${playerCount}`;
     const player = new Player(assignedName, false, "regular", true, false);
