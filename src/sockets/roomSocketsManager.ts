@@ -5,8 +5,8 @@ import {
   joinFromUrlHandler,
   getPlayersHandler,
   sendSnackbarHandler,
-  newMessageHandler,
-  getMessagesHandler,
+  newChatHandler,
+  getChatHandler,
   editNameHandler,
   readyUpHandler,
   removePlayerHandler,
@@ -41,12 +41,12 @@ export function setupRoomSocketHandlers(io: Server) {
       await sendSnackbarHandler(socket, severity, message);
     });
 
-    socket.on("newMessage", async (roomId, playerName, message) => {
-      await newMessageHandler(io, roomId, playerName, message);
+    socket.on("newChat", async (roomId, playerName, message) => {
+      await newChatHandler(io, roomId, playerName, message);
     });
 
-    socket.on("getMessages", async (roomId) => {
-      await getMessagesHandler(io, roomId);
+    socket.on("getChat", async (roomId) => {
+      await getChatHandler(io, roomId);
     });
 
     socket.on("editName", async (roomId, playerName, newName) => {

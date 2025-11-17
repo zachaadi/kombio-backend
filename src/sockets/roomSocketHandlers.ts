@@ -1,7 +1,7 @@
 import { Socket, Server } from "socket.io";
 import { Room, activeRooms, RoomStatus } from "../models/room.js";
 import { Player } from "../models/player.js";
-import { Message } from "../models/message.js";
+import { Chat } from "../models/chat.js";
 import { Game } from "../models/game.js";
 
 const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
@@ -56,7 +56,7 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
 
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
-    socket.emit("messageList", room.messages);
+    socket.emit("chatList", room.chat);
   }
 
   console.log("joinRoomHandler");
@@ -88,7 +88,7 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
     }
 
     io.to(roomId).emit("playersList", room.players);
-    io.to(roomId).emit("messageList", room.messages);
+    io.to(roomId).emit("chatList", room.chat);
     //send a snackbar that player rejoined???
   }
 
@@ -116,7 +116,7 @@ export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: str
     socket.emit("playerFromUrl", roomId, assignedName);
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
-    socket.emit("messageList", room.messages);
+    socket.emit("chatList", room.chat);
   } else {
     createRoomHandler(socket, roomId, "guest");
     socket.emit("playerFromUrl", roomId, "guest");
@@ -141,25 +141,25 @@ export const sendSnackbarHandler = async (socket: Socket, severity: string, mess
   console.log("sendSnackbarHandler");
 };
 
-export const newMessageHandler = async (io: Server, roomId: string, playerName: string, message: string) => {
-  const newMessage = new Message(playerName, message);
+export const newChatHandler = async (io: Server, roomId: string, playerName: string, message: string) => {
+  const newChat = new Chat(playerName, message);
   const room = activeRooms.get(roomId);
 
   if (room) {
-    room.messages.push(newMessage);
-    io.to(roomId).emit("messageList", room.messages);
+    room.chat.push(newChat);
+    io.to(roomId).emit("chatList", room.chat);
   }
 
-  console.log("newMessageHandler");
+  console.log("newChatHandler");
 };
 
-export const getMessagesHandler = async (io: Server, roomId: string) => {
+export const getChatHandler = async (io: Server, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
-    io.to(roomId).emit("messageList", room.messages);
+    io.to(roomId).emit("chatList", room.chat);
   }
 
-  console.log("getMessagesHandler");
+  console.log("getChatHandler");
 };
 
 export const editNameHandler = async (
@@ -177,16 +177,16 @@ export const editNameHandler = async (
   if (room) {
     const player = room.players.find((player) => player.name === playerName);
     if (player) {
-      room.messages.forEach((message) => {
-        if (message.name == playerName) {
-          message.name = newName;
+      room.chat.forEach((chat) => {
+        if (chat.name == playerName) {
+          chat.name = newName;
         }
       });
 
       player.name = newName;
     }
 
-    io.to(roomId).emit("messageList", room.messages);
+    io.to(roomId).emit("chatList", room.chat);
     io.to(roomId).emit("playersList", room.players);
   }
 
