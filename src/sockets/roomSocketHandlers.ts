@@ -20,7 +20,7 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
   socket.data.roomId = roomId;
   await socket.join(roomId);
 
-  const game = new Game(0);
+  const game = new Game(0, []);
 
   const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], game);
 
@@ -89,6 +89,8 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
 
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("chatList", room.chat);
+    io.to(roomId).emit("setGame", room.game);
+    io.to(roomId).emit("actionList", room.game.actions);
     //send a snackbar that player rejoined???
   }
 

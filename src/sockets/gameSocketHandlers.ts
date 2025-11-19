@@ -10,18 +10,40 @@ export const beginGameHandler = async (io: Server, roomId: string) => {
     const firstPlayer = room.players[turnIndex];
     if (firstPlayer) {
       firstPlayer.isTurn = true;
-      io.to(roomId).emit("beginningGame");
+      io.to(roomId).emit("beginningGame", room.game);
       io.to(roomId).emit("playersList", room.players);
-      const firstPlayerSocket = (await io.in(roomId).fetchSockets()).find(
-        (socket) => socket.data.playerName === firstPlayer.name
-      );
-      if (firstPlayerSocket) {
-        firstPlayerSocket.emit("yourTurn");
-      }
     }
   }
 
   console.log("beginGameHandler");
+};
+
+export const getGameHandler = async (io: Server, roomId: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    io.to(roomId).emit("setGame", room.game);
+  }
+
+  console.log("getGameHandler");
+};
+
+export const newActionHandler = async (io: Server, roomId: string, action: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    room.game.actions.push(action);
+    io.to(roomId).emit("actionList", room.game.actions);
+  }
+
+  console.log("newActionHandler");
+};
+
+export const getActionsHandler = async (io: Server, roomId: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    io.to(roomId).emit("actionList", room.game.actions);
+  }
+
+  console.log("getActionsHandler");
 };
 
 export const nextTurnHandler = async (io: Server, roomId: string) => {
@@ -44,12 +66,6 @@ export const nextTurnHandler = async (io: Server, roomId: string) => {
 
     if (playerTurn) {
       playerTurn.isTurn = true;
-      const playerSocket = (await io.in(roomId).fetchSockets()).find(
-        (socket) => socket.data.playerName === playerTurn.name
-      );
-      if (playerSocket) {
-        playerSocket.emit("yourTurn");
-      }
       io.to(roomId).emit("playersList", room.players);
     }
   }
