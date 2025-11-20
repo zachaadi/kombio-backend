@@ -91,6 +91,7 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
     io.to(roomId).emit("chatList", room.chat);
     io.to(roomId).emit("setGame", room.game);
     io.to(roomId).emit("actionList", room.game.actions);
+    io.to(roomId).emit("roomStatus", room.status);
     //send a snackbar that player rejoined???
   }
 
@@ -193,6 +194,15 @@ export const editNameHandler = async (
   }
 
   console.log("editNameHandler");
+};
+
+export const getRoomStatusHandler = async (io: Server, roomId: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    io.to(roomId).emit("roomStatus", room.status);
+  }
+
+  console.log("getRoomStatusHandler");
 };
 
 export const readyUpHandler = async (io: Server, roomId: string, playerName: string) => {

@@ -8,6 +8,7 @@ import {
   newChatHandler,
   getChatHandler,
   editNameHandler,
+  getRoomStatusHandler,
   readyUpHandler,
   removePlayerHandler,
   disconnectHandler,
@@ -51,6 +52,10 @@ export function setupRoomSocketHandlers(io: Server) {
 
     socket.on("editName", async (roomId, playerName, newName) => {
       await editNameHandler(io, socket, roomId, playerName, newName);
+    });
+
+    socket.on("getRoomStatus", async (roomId) => {
+      await getRoomStatusHandler(io, roomId);
     });
 
     socket.on("readyUp", async (roomId, playerName) => {
