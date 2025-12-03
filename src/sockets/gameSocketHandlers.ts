@@ -8,6 +8,9 @@ export const beginGameHandler = async (io: Server, roomId: string) => {
     const turnIndex = room.game.turnIndex;
 
     const firstPlayer = room.players[turnIndex];
+    room.game.deck.initializeDeck();
+    room.game.deck.initializeHands();
+
     if (firstPlayer) {
       firstPlayer.isTurn = true;
       io.to(roomId).emit("beginningGame", room.game);
@@ -67,6 +70,7 @@ export const nextTurnHandler = async (io: Server, roomId: string) => {
     if (playerTurn) {
       playerTurn.isTurn = true;
       io.to(roomId).emit("playersList", room.players);
+      io.to(roomId).emit("setGame", room.game);
     }
   }
 

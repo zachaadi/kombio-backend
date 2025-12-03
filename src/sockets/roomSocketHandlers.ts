@@ -3,6 +3,7 @@ import { Room, activeRooms, RoomStatus } from "../models/room.js";
 import { Player } from "../models/player.js";
 import { Chat } from "../models/chat.js";
 import { Game } from "../models/game.js";
+import { Deck } from "../models/deck.js";
 
 const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
 const adminReplacementTimers = new Map<string, NodeJS.Timeout>();
@@ -20,13 +21,12 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
   socket.data.roomId = roomId;
   await socket.join(roomId);
 
-  const game = new Game(0, []);
-
+  const deck = new Deck();
+  const game = new Game(0, [], deck);
   const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], game);
-
   activeRooms.set(roomId, room);
-  socket.emit("roomCreated", roomId);
 
+  socket.emit("roomCreated", roomId);
   socket.emit("playersList", room.players);
 
   console.log("createRoomHandler");
@@ -52,8 +52,8 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
 
     await socket.join(roomId);
     room.players.push(player);
-    socket.emit("roomJoined", roomId);
 
+    socket.emit("roomJoined", roomId);
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
     socket.emit("chatList", room.chat);
