@@ -9,7 +9,7 @@ export const beginGameHandler = async (io: Server, roomId: string) => {
 
     const firstPlayer = room.players[turnIndex];
     room.game.deck.initializeDeck();
-    room.game.deck.initializeHands();
+    room.game.deck.initializeHands(room.players);
 
     if (firstPlayer) {
       firstPlayer.isTurn = true;

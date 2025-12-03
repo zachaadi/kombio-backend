@@ -1,3 +1,5 @@
+import { Player } from "./player.js";
+
 export class Deck {
   cards: string[];
 
@@ -42,8 +44,17 @@ export class Deck {
     }
   }
 
-  initializeHands(): void {
+  initializeHands(players: Player[]): void {
     this.shuffle();
+
+    for (const player of players) {
+      for (let i = 0; i < 4; i++) {
+        const card = this.cards.pop();
+        if (card) {
+          player.hand.push(card);
+        }
+      }
+    }
   }
 
   drawCard(): void {}
