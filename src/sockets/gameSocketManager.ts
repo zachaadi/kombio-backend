@@ -3,6 +3,7 @@ import {
   getGameHandler,
   newActionHandler,
   getActionsHandler,
+  viewCardHandler,
   nextTurnHandler,
   endGameHandler,
 } from "./gameSocketHandlers.js";
@@ -26,6 +27,10 @@ export function setupGameSocketHandlers(io: Server) {
     socket.on("getActions", async (roomId) => {
       await getActionsHandler(io, roomId);
     });
+
+    socket.on("viewCard", async (roomId, name, index) => {
+      await viewCardHandler(socket, roomId, name, index)
+    })
 
     socket.on("nextTurn", async (roomId) => {
       await nextTurnHandler(io, roomId);

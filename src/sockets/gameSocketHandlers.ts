@@ -1,4 +1,4 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { activeRooms, RoomStatus } from "../models/room.js";
 
 export const beginGameHandler = async (io: Server, roomId: string) => {
@@ -47,6 +47,19 @@ export const getActionsHandler = async (io: Server, roomId: string) => {
   }
 
   console.log("getActionsHandler");
+};
+
+export const viewCardHandler = async (socket: Socket, roomId: string, name: string, index: number) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    const playerHand = room.players.find((p) => p.name == name)?.hand;
+
+    if (playerHand) {
+      const card = playerHand[index];
+      socket.emit("viewedCard", card);
+    }
+  }
+  console.log("viewCardHandler");
 };
 
 export const nextTurnHandler = async (io: Server, roomId: string) => {
