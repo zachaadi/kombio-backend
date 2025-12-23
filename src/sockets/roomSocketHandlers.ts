@@ -45,6 +45,10 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
       socket.emit("sendSnackbar", "error", "Game is already in progress");
       return;
     }
+    if (room.players.filter((player) => player.isActive == true).length >= 6) {
+      socket.emit("sendSnackbar", "error", "6 players in game already");
+      return;
+    }
 
     const player = new Player(playerName, false, "regular", true, false, []);
     socket.data.playerName = playerName;
@@ -101,6 +105,11 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
 export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
+    if (room.players.filter((player) => player.isActive == true).length >= 6) {
+      socket.emit("sendSnackbar", "error", "6 players in game already");
+      socket.emit("kickPlayer");
+      return;
+    }
     if (room.status == RoomStatus.IN_PROGRESS) {
       socket.emit("kickPlayer");
       socket.emit("sendSnackbar", "error", "Game is already in progress");

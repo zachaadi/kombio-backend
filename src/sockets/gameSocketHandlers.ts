@@ -4,6 +4,8 @@ import { activeRooms, RoomStatus } from "../models/room.js";
 export const beginGameHandler = async (io: Server, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
+    room.players = room.players.filter((player) => player.isActive == true);
+
     room.status = RoomStatus.IN_PROGRESS;
     const turnIndex = room.game.turnIndex;
 
