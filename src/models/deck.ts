@@ -69,5 +69,10 @@ export class Deck {
     }
   }
 
-  drawCard(): void {}
+  drawCard(player: Player): void {
+    const drawnCard = this.cards.pop();
+    if (drawnCard) {
+      player.hand.push(drawnCard);
+    }
+  }
 }

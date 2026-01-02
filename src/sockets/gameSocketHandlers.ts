@@ -51,6 +51,19 @@ export const getActionsHandler = async (io: Server, roomId: string) => {
   console.log("getActionsHandler");
 };
 
+export const drawCardHandler = async (io: Server, roomId: string, name: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    const player = room.players.find((p) => p.name == name);
+    if (player) {
+      room.game.deck.drawCard(player);
+    }
+    io.to(roomId).emit("drawnCard", room.players);
+  }
+
+  console.log("drawCardHandler");
+};
+
 export const viewCardHandler = async (socket: Socket, roomId: string, name: string, index: number) => {
   const room = activeRooms.get(roomId);
   if (room) {
@@ -58,7 +71,7 @@ export const viewCardHandler = async (socket: Socket, roomId: string, name: stri
 
     if (playerHand) {
       const card = playerHand[index];
-      socket.emit("viewedCard", card);
+      socket.emit("viewedCard", card, name);
     }
   }
   console.log("viewCardHandler");
