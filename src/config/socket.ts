@@ -1,7 +1,7 @@
 export const config = {
   port: 3000,
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["https://kombio-frontend.onrender.com", "https://kombio-frontend-nonprod.onrender.com"],
     methods: ["GET", "POST"],
   },
 };
