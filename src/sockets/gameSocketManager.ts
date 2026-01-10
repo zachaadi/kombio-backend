@@ -4,7 +4,7 @@ import {
   newActionHandler,
   getActionsHandler,
   drawCardHandler,
-  viewCardHandler,
+  flipCardHandler,
   nextTurnHandler,
   endGameHandler,
 } from "./gameSocketHandlers.js";
@@ -33,8 +33,8 @@ export function setupGameSocketHandlers(io: Server) {
       await drawCardHandler(io, roomId, name);
     });
 
-    socket.on("viewCard", async (roomId, name, index) => {
-      await viewCardHandler(socket, roomId, name, index);
+    socket.on("flipCard", async (roomId, myName, id, name) => {
+      await flipCardHandler(io, roomId, myName, id, name);
     });
 
     socket.on("nextTurn", async (roomId) => {

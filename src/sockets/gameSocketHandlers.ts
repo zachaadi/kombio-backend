@@ -57,24 +57,33 @@ export const drawCardHandler = async (io: Server, roomId: string, name: string) 
     const player = room.players.find((p) => p.name == name);
     if (player) {
       room.game.deck.drawCard(player);
+      const drawnCard = player.hand[player.hand.length - 1]?.id;
+      io.to(roomId).emit("drawnCard", room.players, drawnCard, name);
     }
-    io.to(roomId).emit("drawnCard", room.players);
   }
 
   console.log("drawCardHandler");
 };
 
-export const viewCardHandler = async (socket: Socket, roomId: string, name: string, index: number) => {
+export const flipCardHandler = async (io: Server, roomId: string, myName: string, id: number, name: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
     const playerHand = room.players.find((p) => p.name == name)?.hand;
-
     if (playerHand) {
-      const card = playerHand[index];
-      socket.emit("viewedCard", card, name);
+      let card = playerHand.find((card) => card.id == id);
+      if (card) {
+        if (card.isFlipped == false) {
+          card.isFlipped = true;
+          card.flippedBy = myName;
+        } else if (card.isFlipped == true) {
+          card.isFlipped = false;
+          card.flippedBy = "";
+        }
+      }
+      io.to(roomId).emit("flippedCard", card, room.players);
     }
   }
-  console.log("viewCardHandler");
+  console.log("flipCardHandler");
 };
 
 export const nextTurnHandler = async (io: Server, roomId: string) => {
