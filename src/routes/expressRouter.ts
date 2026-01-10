@@ -11,7 +11,7 @@ router.use(express.static(__dirname));
 
 router.use("/favicon.ico", express.static("public/favicon.svg"));
 
-router.get("/", (req, res) => {
+router.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "../../index.html"));
 });
 

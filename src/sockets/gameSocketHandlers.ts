@@ -1,4 +1,4 @@
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { activeRooms, RoomStatus } from "../models/room.js";
 
 export const beginGameHandler = async (io: Server, roomId: string) => {
