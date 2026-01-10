@@ -1,7 +1,21 @@
 import { Player } from "./player.js";
 
+export class Card {
+  id: number;
+  value: string;
+  isFlipped: boolean;
+  flippedBy: string;
+
+  constructor(id: number, value: string, isFlipped: boolean, flippedBy: string) {
+    this.id = id;
+    this.value = value;
+    this.isFlipped = isFlipped;
+    this.flippedBy = flippedBy;
+  }
+}
+
 export class Deck {
-  cards: string[];
+  cards: Card[];
 
   constructor() {
     this.cards = [];
@@ -44,8 +58,8 @@ export class Deck {
     ];
     this.cards = [];
 
-    for (const card of cardList) {
-      this.cards.push(card);
+    for (let i = 0; i < cardList.length; i++) {
+      this.cards.push(new Card(i + 1, cardList[i]!, false, "" ));
     }
   }
 
