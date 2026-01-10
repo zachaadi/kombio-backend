@@ -5,16 +5,18 @@ import {
   joinFromUrlHandler,
   getPlayersHandler,
   sendSnackbarHandler,
-  newMessageHandler,
-  getMessagesHandler,
+  newChatHandler,
+  getChatHandler,
   editNameHandler,
+  getRoomStatusHandler,
   readyUpHandler,
   removePlayerHandler,
   disconnectHandler,
 } from "./roomSocketHandlers.js";
+
 import { Server } from "socket.io";
 
-export function setupSocketHandlers(io: Server) {
+export function setupRoomSocketHandlers(io: Server) {
   io.on("connection", (socket) => {
     socket.on("createRoom", async (roomId, playerName) => {
       await createRoomHandler(socket, roomId, playerName);
@@ -40,16 +42,20 @@ export function setupSocketHandlers(io: Server) {
       await sendSnackbarHandler(socket, severity, message);
     });
 
-    socket.on("newMessage", async (roomId, playerName, message) => {
-      await newMessageHandler(io, roomId, playerName, message);
+    socket.on("newChat", async (roomId, playerName, message) => {
+      await newChatHandler(io, roomId, playerName, message);
     });
 
-    socket.on("getMessages", async (roomId) => {
-      await getMessagesHandler(io, roomId);
+    socket.on("getChat", async (roomId) => {
+      await getChatHandler(io, roomId);
     });
 
     socket.on("editName", async (roomId, playerName, newName) => {
       await editNameHandler(io, socket, roomId, playerName, newName);
+    });
+
+    socket.on("getRoomStatus", async (roomId) => {
+      await getRoomStatusHandler(io, roomId);
     });
 
     socket.on("readyUp", async (roomId, playerName) => {

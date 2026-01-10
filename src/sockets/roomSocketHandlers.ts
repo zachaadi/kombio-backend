@@ -1,7 +1,9 @@
 import { Socket, Server } from "socket.io";
 import { Room, activeRooms, RoomStatus } from "../models/room.js";
 import { Player } from "../models/player.js";
-import { Message } from "../models/message.js";
+import { Chat } from "../models/chat.js";
+import { Game } from "../models/game.js";
+import { Deck } from "../models/deck.js";
 
 const roomDeletionTimers = new Map<string, NodeJS.Timeout>();
 const adminReplacementTimers = new Map<string, NodeJS.Timeout>();
@@ -13,17 +15,18 @@ export const createRoomHandler = async (socket: Socket, roomId: string, playerNa
     return;
   }
 
-  const player = new Player(playerName, false, "admin", true);
+  const player = new Player(playerName, false, "admin", true, false, []);
 
   socket.data.playerName = playerName;
   socket.data.roomId = roomId;
   await socket.join(roomId);
 
-  const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], []);
-
+  const deck = new Deck();
+  const game = new Game(0, [], deck);
+  const room = await new Room(roomId, RoomStatus.NOTREADY, [player], [], game);
   activeRooms.set(roomId, room);
-  socket.emit("roomCreated", roomId);
 
+  socket.emit("roomCreated", roomId);
   socket.emit("playersList", room.players);
 
   console.log("createRoomHandler");
@@ -36,27 +39,28 @@ export const joinRoomHandler = async (io: Server, socket: Socket, roomId: string
     return;
   }
 
-  const player = new Player(playerName, false, "regular", true);
-  socket.data.playerName = playerName;
-  socket.data.roomId = roomId;
-
-  await socket.join(roomId);
   const room = activeRooms.get(roomId);
-
   if (room) {
-    room.players.push(player);
-    socket.emit("roomJoined", roomId);
+    if (room.status == RoomStatus.IN_PROGRESS) {
+      socket.emit("sendSnackbar", "error", "Game is already in progress");
+      return;
+    }
+    if (room.players.filter((player) => player.isActive == true).length >= 6) {
+      socket.emit("sendSnackbar", "error", "6 players in game already");
+      return;
+    }
 
+    const player = new Player(playerName, false, "regular", true, false, []);
+    socket.data.playerName = playerName;
+    socket.data.roomId = roomId;
+
+    await socket.join(roomId);
+    room.players.push(player);
+
+    socket.emit("roomJoined", roomId);
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
-    socket.emit("messageList", room.messages);
-
-    // why did i have this code?
-    // const timer = roomDeletionTimers.get(roomId);
-    // if (timer) {
-    //   clearTimeout(timer);
-    //   roomDeletionTimers.delete(roomId);
-    // }
+    socket.emit("chatList", room.chat);
   }
 
   console.log("joinRoomHandler");
@@ -88,7 +92,11 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
     }
 
     io.to(roomId).emit("playersList", room.players);
-    io.to(roomId).emit("messageList", room.messages);
+    io.to(roomId).emit("chatList", room.chat);
+    io.to(roomId).emit("setGame", room.game);
+    io.to(roomId).emit("actionList", room.game.actions);
+    io.to(roomId).emit("roomStatus", room.status);
+    //send a snackbar that player rejoined???
   }
 
   console.log("reJoinRoomHandler");
@@ -97,9 +105,20 @@ export const reJoinRoomHandler = async (io: Server, socket: Socket, roomId: stri
 export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
+    if (room.players.filter((player) => player.isActive == true).length >= 6) {
+      socket.emit("sendSnackbar", "error", "6 players in game already");
+      socket.emit("kickPlayer");
+      return;
+    }
+    if (room.status == RoomStatus.IN_PROGRESS) {
+      socket.emit("kickPlayer");
+      socket.emit("sendSnackbar", "error", "Game is already in progress");
+      return;
+    }
+
     const playerCount = room.players.length;
     const assignedName = `guest${playerCount}`;
-    const player = new Player(assignedName, false, "regular", true);
+    const player = new Player(assignedName, false, "regular", true, false, []);
     socket.data.playerName = assignedName;
     socket.data.roomId = roomId;
 
@@ -109,7 +128,7 @@ export const joinFromUrlHandler = async (io: Server, socket: Socket, roomId: str
     socket.emit("playerFromUrl", roomId, assignedName);
     io.to(roomId).emit("playersList", room.players);
     io.to(roomId).emit("notReady", room);
-    socket.emit("messageList", room.messages);
+    socket.emit("chatList", room.chat);
   } else {
     createRoomHandler(socket, roomId, "guest");
     socket.emit("playerFromUrl", roomId, "guest");
@@ -134,25 +153,25 @@ export const sendSnackbarHandler = async (socket: Socket, severity: string, mess
   console.log("sendSnackbarHandler");
 };
 
-export const newMessageHandler = async (io: Server, roomId: string, playerName: string, message: string) => {
-  const newMessage = new Message(playerName, message);
+export const newChatHandler = async (io: Server, roomId: string, playerName: string, message: string) => {
+  const newChat = new Chat(playerName, message);
   const room = activeRooms.get(roomId);
 
   if (room) {
-    room.messages.push(newMessage);
-    io.to(roomId).emit("messageList", room.messages);
+    room.chat.push(newChat);
+    io.to(roomId).emit("chatList", room.chat);
   }
 
-  console.log("newMessageHandler");
+  console.log("newChatHandler");
 };
 
-export const getMessagesHandler = async (io: Server, roomId: string) => {
+export const getChatHandler = async (io: Server, roomId: string) => {
   const room = activeRooms.get(roomId);
   if (room) {
-    io.to(roomId).emit("messageList", room.messages);
+    io.to(roomId).emit("chatList", room.chat);
   }
 
-  console.log("getMessagesHandler");
+  console.log("getChatHandler");
 };
 
 export const editNameHandler = async (
@@ -170,20 +189,29 @@ export const editNameHandler = async (
   if (room) {
     const player = room.players.find((player) => player.name === playerName);
     if (player) {
-      room.messages.forEach((message) => {
-        if (message.name == playerName) {
-          message.name = newName;
+      room.chat.forEach((chat) => {
+        if (chat.name == playerName) {
+          chat.name = newName;
         }
       });
 
       player.name = newName;
     }
 
-    io.to(roomId).emit("messageList", room.messages);
+    io.to(roomId).emit("chatList", room.chat);
     io.to(roomId).emit("playersList", room.players);
   }
 
   console.log("editNameHandler");
+};
+
+export const getRoomStatusHandler = async (io: Server, roomId: string) => {
+  const room = activeRooms.get(roomId);
+  if (room) {
+    io.to(roomId).emit("roomStatus", room.status);
+  }
+
+  console.log("getRoomStatusHandler");
 };
 
 export const readyUpHandler = async (io: Server, roomId: string, playerName: string) => {
@@ -198,13 +226,14 @@ export const readyUpHandler = async (io: Server, roomId: string, playerName: str
     }
 
     const allReady = room.players.filter((player) => player.isActive).every((player) => player.isReady);
+    const minActivePlayers = room.players.filter((player) => player.isActive && player.isReady).length > 1;
 
-    if (allReady) {
+    if (allReady && minActivePlayers) {
       room.status = RoomStatus.READY;
-      io.to(roomId).emit("allReady", room);
+      io.to(roomId).emit("allReady");
     } else {
       room.status = RoomStatus.NOTREADY;
-      io.to(roomId).emit("notReady", room);
+      io.to(roomId).emit("notReady");
     }
   }
   console.log("readyUpHandler");
@@ -225,6 +254,11 @@ export const removePlayerHandler = async (io: Server, roomId: string, playerName
       io.to(roomId).emit("sendSnackbar", "info", `${playerName} removed from lobby`);
     }
     io.to(roomId).emit("playersList", room.players);
+    const minActivePlayers = room.players.filter((player) => player.isActive && player.isReady).length > 1;
+
+    if (!minActivePlayers) {
+      io.to(roomId).emit("notReady", room);
+    }
   }
 
   console.log("removePlayerHandler");
