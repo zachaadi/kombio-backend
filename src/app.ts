@@ -20,6 +20,17 @@ app.use(express.json());
 app.use("/", router);
 app.use("/users", usersRouter);
 
+app.use((error: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(error);
+  if (error.message === "Username already exists") {
+    res.status(409).json({ error: "Username already exists" });
+  } else if (error.message === "Email already exists") {
+    res.status(409).json({ error: "Email already exists" });
+  } else {
+    res.status(500).json("Something broke!");
+  }
+});
+
 setupRoomSocketHandlers(io);
 setupGameSocketHandlers(io);
 
