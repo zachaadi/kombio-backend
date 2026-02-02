@@ -4,8 +4,8 @@ import jwt, { SignOptions } from "jsonwebtoken";
 
 const router = express.Router();
 
-const createToken = (username: String) => {
-  const payload = { username: username };
+const createToken = (username: String, role: String) => {
+  const payload = { username: username, role: role };
   const secret = process.env.JWT_SECRET;
   const options: SignOptions = { expiresIn: "1h" };
   if (!secret) {
@@ -16,11 +16,20 @@ const createToken = (username: String) => {
 
 router.post("/create", async (req, res, next) => {
   try {
-    const query = { email: req.body.email, username: req.body.username, password: req.body.password };
-    await postUser(query);
-    const token = createToken(req.body.username);
-
-    res.status(201).json(token);
+    //hash password
+    const query = {
+      email: req.body.email,
+      username: req.body.username,
+      password: req.body.password,
+      role: "regular",
+      accountCreationDate: new Date().toISOString().slice(0, 10),
+      lastLoginDate: new Date().toISOString().slice(0, 10),
+    };
+    const results = await postUser(query);
+    if (results) {
+      const token = createToken(results.username, results.role);
+      res.status(201).json(token);
+    }
   } catch (error) {
     next(error);
   }

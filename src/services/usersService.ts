@@ -8,7 +8,7 @@ async function postUser(query: any) {
     throw new Error("Username already exists");
   }
   const results = await collection.insertOne(query);
-  return results;
+  return await collection.findOne({ _id: results.insertedId });
 }
 
 export { postUser };
