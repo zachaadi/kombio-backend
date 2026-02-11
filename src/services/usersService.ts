@@ -15,7 +15,7 @@ async function loginUser(query: any) {
   const collection = await db.collection("users");
   const user = await collection.findOne({ username: query.username });
   if (user) {
-    if ((user.password = query.password)) {
+    if ((user.password === query.password)) {
       return user;
     }
   } else {
