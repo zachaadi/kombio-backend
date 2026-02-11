@@ -1,5 +1,5 @@
 import express from "express";
-import { postUser, loginUser } from "../services/usersService.js";
+import { createUser, loginUser } from "../services/usersService.js";
 import jwt, { SignOptions } from "jsonwebtoken";
 
 const router = express.Router();
@@ -16,7 +16,6 @@ const createToken = (username: String, role: String) => {
 
 router.post("/create", async (req, res, next) => {
   try {
-    //hash password
     const query = {
       email: req.body.email,
       username: req.body.username,
@@ -25,7 +24,7 @@ router.post("/create", async (req, res, next) => {
       accountCreationDate: new Date().toISOString().slice(0, 10),
       lastLoginDate: new Date().toISOString().slice(0, 10),
     };
-    const results = await postUser(query);
+    const results = await createUser(query);
     if (results) {
       const token = createToken(results.username, results.role);
       res.status(201).json(token);
