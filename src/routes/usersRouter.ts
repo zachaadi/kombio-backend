@@ -1,5 +1,5 @@
 import express from "express";
-import { postUser } from "../services/usersService.js";
+import { postUser, loginUser } from "../services/usersService.js";
 import jwt, { SignOptions } from "jsonwebtoken";
 
 const router = express.Router();
@@ -36,19 +36,30 @@ router.post("/create", async (req, res, next) => {
 });
 
 router.post("/login", async (req, res, next) => {
-  //login user
+  try {
+    const query = {
+      username: req.body.username,
+      password: req.body.password,
+      lastLoginDate: new Date().toISOString().slice(0, 10),
+    };
+
+    const results = await loginUser(query);
+    if (results) {
+      const token = createToken(results.username, results.role);
+      res.status(200).json(token);
+    }
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get("/:username", async (req, res, next) => {
-  //get profile
-});
+// router.get("/:username", async (req, res, next) => {
+// });
 
-router.put("/:username", async (req, res, next) => {
-  //edit profile
-});
+// router.put("/:username", async (req, res, next) => {
+// });
 
-router.delete("/:username", async (req, res, next) => {
-  //delete profile
-});
+// router.delete("/:username", async (req, res, next) => {
+// });
 
 export default router;

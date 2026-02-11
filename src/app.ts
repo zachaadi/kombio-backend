@@ -26,6 +26,8 @@ app.use((error: Error, _req: express.Request, res: express.Response, _next: expr
     res.status(409).json({ error: "Username already exists" });
   } else if (error.message === "Email already exists") {
     res.status(409).json({ error: "Email already exists" });
+  } else if (error.message === "Username or Password was incorrect") {
+    res.status(400).json({ error: "Username or Password was incorrect" });
   } else {
     res.status(500).json("Something broke!");
   }

@@ -11,4 +11,16 @@ async function postUser(query: any) {
   return await collection.findOne({ _id: results.insertedId });
 }
 
-export { postUser };
+async function loginUser(query: any) {
+  const collection = await db.collection("users");
+  const user = await collection.findOne({ username: query.username });
+  if (user) {
+    if ((user.password = query.password)) {
+      return user;
+    }
+  } else {
+    throw new Error("Username or Password was incorrect");
+  }
+}
+
+export { postUser, loginUser };
