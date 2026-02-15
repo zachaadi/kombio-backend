@@ -8,5 +8,6 @@ export const config = {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 };

@@ -27,7 +27,12 @@ router.post("/create", async (req, res, next) => {
     const results = await createUser(query);
     if (results) {
       const token = createToken(results.username, results.role);
-      res.status(201).json(token);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+      res.status(201).json({ username: results.username });
     }
   } catch (error) {
     next(error);
@@ -45,7 +50,12 @@ router.post("/login", async (req, res, next) => {
     const results = await loginUser(query);
     if (results) {
       const token = createToken(results.username, results.role);
-      res.status(200).json(token);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+      });
+      res.status(200).json({ username: results.username });
     }
   } catch (error) {
     next(error);
