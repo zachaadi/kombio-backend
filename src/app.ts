@@ -52,7 +52,7 @@ app.use((error: Error, _req: express.Request, res: express.Response, _next: expr
   } else if (error.message === "Username or Password was incorrect") {
     res.status(400).json({ error: "Username or Password was incorrect" });
   } else {
-    res.status(500).json("Something broke!");
+    res.status(500).json({ error: "Something broke!" });
   }
 });
 

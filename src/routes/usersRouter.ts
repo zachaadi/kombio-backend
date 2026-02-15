@@ -1,6 +1,7 @@
 import express from "express";
 import { createUser, loginUser } from "../services/usersService.js";
 import jwt, { SignOptions } from "jsonwebtoken";
+// import { verifyToken } from "../app.js";
 
 const router = express.Router();
 
@@ -61,6 +62,23 @@ router.post("/login", async (req, res, next) => {
     next(error);
   }
 });
+
+router.post("/logout", async (_req, res, next) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// router.get("/:username", verifyToken, async (req, res, next) => {
+//   res.status(200).json({ message: "good" });
+// });
 
 // router.get("/:username", async (req, res, next) => {
 // });
