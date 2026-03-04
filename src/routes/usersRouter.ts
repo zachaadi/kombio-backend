@@ -1,7 +1,6 @@
 import express from "express";
 import { createUser, loginUser } from "../services/usersService.js";
 import jwt, { SignOptions } from "jsonwebtoken";
-// import { verifyToken } from "../app.js";
 
 const router = express.Router();
 
@@ -31,7 +30,7 @@ router.post("/create", async (req, res, next) => {
       res.cookie("token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
       });
       res.status(201).json({ username: results.username });
     }
@@ -54,7 +53,7 @@ router.post("/login", async (req, res, next) => {
       res.cookie("token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax",
       });
       res.status(200).json({ username: results.username });
     }
@@ -68,7 +67,7 @@ router.post("/logout", async (_req, res, next) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
     });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
