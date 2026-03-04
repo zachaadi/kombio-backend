@@ -1,7 +1,6 @@
 import express from "express";
 import { createUser, loginUser } from "../services/usersService.js";
 import jwt, { SignOptions } from "jsonwebtoken";
-// import { verifyToken } from "../app.js";
 
 const router = express.Router();
 
